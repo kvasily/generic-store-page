@@ -1,0 +1,24 @@
+[Unit]
+Description=Generic store checkout
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=generic-store-page
+Group=generic-store-page
+WorkingDirectory=/opt/generic-store-page
+EnvironmentFile=/etc/generic-store-page.env
+ExecStart=/usr/bin/node /opt/generic-store-page/start.mjs
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+StateDirectory=generic-store-page
+ReadWritePaths=/var/lib/generic-store-page
+
+[Install]
+WantedBy=multi-user.target

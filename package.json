@@ -1,0 +1,18 @@
+{
+  "name": "generic-store-page",
+  "private": true,
+  "version": "1.0.0",
+  "description": "A customizable generic storefront with a catalog, accounts, cart and Bitcoin checkout",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env start.mjs",
+    "test": "node --test test/*.test.mjs",
+    "orders": "node --env-file-if-exists=.env start.mjs --orders",
+    "doctor": "node --env-file-if-exists=.env doctor.mjs",
+    "payment:check": "node --env-file-if-exists=.env start.mjs --payment-check",
+    "admin": "node --env-file-if-exists=.env admin.mjs"
+  }
+}

@@ -1,0 +1,25 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { DatabaseSync } from 'node:sqlite';
+import { mkdtempSync,rmSync,existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+const script=fileURLToPath(new URL('../admin.mjs',import.meta.url));
+test('admin command migrates old accounts, grants, reports and revokes without modifying passwords',t=>{
+ const dir=mkdtempSync(join(tmpdir(),'shop-admin-'));
+ const db=new DatabaseSync(join(dir,'shop.sqlite'));t.after(()=>{db.close();rmSync(dir,{recursive:true,force:true});});
+ db.exec("CREATE TABLE customers (id TEXT PRIMARY KEY, username TEXT UNIQUE, password_hash TEXT, created INTEGER); INSERT INTO customers VALUES ('id','alice','unchanged-hash',1)");
+ const run=(...args)=>spawnSync(process.execPath,[script,...args],{env:{...process.env,DATA_DIR:dir},encoding:'utf8'});
+ assert.equal(run('ALICE').status,0);assert.equal(db.prepare('SELECT is_admin FROM customers').get().is_admin,1);
+ assert.match(run('alice','--status').stdout,/alice: admin/);
+ assert.equal(run('alice','--revoke').status,0);assert.equal(db.prepare('SELECT is_admin FROM customers').get().is_admin,0);
+ assert.equal(db.prepare('SELECT password_hash FROM customers').get().password_hash,'unchanged-hash');
+ db.prepare('INSERT INTO customers (id,username,password_hash,created) VALUES (?,?,?,?)').run('special',"@store & team!",'unchanged-hash',1);
+ assert.equal(run('@Store & Team!').status,0);assert.match(run('@store & team!','--status').stdout,/@store & team!: admin/);
+ assert.equal(run('missing').status,1);assert.equal(run('alice','--bogus').status,1);assert.equal(run().status,1);
+ assert.equal(db.prepare('SELECT COUNT(*) n FROM customers').get().n,2);
+ const empty=join(dir,'missing');const result=spawnSync(process.execPath,[script,'alice'],{env:{...process.env,DATA_DIR:empty},encoding:'utf8'});
+ assert.equal(result.status,1);assert.equal(existsSync(join(empty,'shop.sqlite')),false);
+});

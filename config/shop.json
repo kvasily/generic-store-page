@@ -1,0 +1,12 @@
+{
+  "currency": "USD",
+  "shippingCents": 500,
+  "shippingCountries": ["US"],
+  "taxIncluded": false,
+  "supportEmail": "",
+  "products": [
+    {"id": "01", "name": "Sample Product 01", "priceCents": 1800},
+    {"id": "02", "name": "Sample Product 02", "priceCents": 2000},
+    {"id": "03", "name": "Sample Product 03", "priceCents": 1900}
+  ]
+}

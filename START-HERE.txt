@@ -1,0 +1,243 @@
+GENERIC STORE — ELECTRUM BITCOIN CHECKOUT
+
+QUICK START
+Requires Node.js 24 or newer: https://nodejs.org/en/download
+From your generic-store-page folder, update and start the entire website:
+  git pull
+  npm start
+Open http://127.0.0.1:8080. This single server runs the catalog, cart, shipping
+and payment pages. Keep its terminal open; Ctrl+C stops it. No npm install or
+second web server is required. If port 8080 is busy, stop your previous server
+with Ctrl+C in its terminal, then run npm start again.
+
+Bitcoin checkout requires your own Electrum configuration.
+Products, USD prices and $5 US shipping remain
+examples until you replace them. Always access the shop through the address
+printed by npm start, rather than opening the HTML file directly.
+
+AUTOMATIC DESKTOP CONNECTION (RECOMMENDED)
+Install Electrum on the same computer that runs npm start. Create your
+personal electrum.local.json beside package.json. This file holds only your master
+PUBLIC key; it is excluded from Git. Create this file with your own wallet configuration.
+
+The regular routine is just:
+  npm start
+No separate daemon commands or RPC-password setup are required. Opening the
+Electrum desktop app alone does not expose the full payment API in recent versions;
+this launcher starts its own dedicated payment helper using the installed app.
+Your normal Electrum window may remain open but is not required by the helper.
+
+npm start enables Bitcoin checkout, including when an old .env says PAYMENT_MODE=demo.
+No liveReady or taxIncluded switches are needed. Review product prices and shipping
+in config/shop.json before publishing. Saved demo orders now offer Pay with Bitcoin.
+If the helper cannot connect, checkout explains the problem and offers a retry.
+Read the startup terminal for the connection error, fix it, and restart npm start.
+
+The helper generates private loopback-only RPC credentials, creates a watch-only
+wallet from your public key, and verifies the wallet matches. It uses a separate
+ignored data/electrum directory and never opens your original wallet file or reads
+its seed/private keys. It reuses its wallet and reservations on restart. A helper
+started by the launcher is stopped when it exits; an already-running dedicated
+helper is reused. Keep data/electrum backed up with data/shop.sqlite.
+
+Electrum must already be installed. Standard PATH installs, common macOS app
+locations and common Windows install locations are searched. If yours is elsewhere,
+add an electrumExecutable property to electrum.local.json with the exact executable
+path. For a Mac app this is commonly:
+  /Applications/Electrum.app/Contents/MacOS/run_electrum
+No arbitrary shell commands or installation downloads are run by the launcher.
+Automatic setup uses mainnet. Manual RPC configuration below remains available
+for test-network wallets and remote service deployments. The helper must finish
+synchronizing before it can create or verify payment requests.
+
+For automatic setup, use these operator commands from the shop directory:
+  npm run orders -- list
+  npm run orders -- show ORDER_REFERENCE
+  npm run orders -- sync ORDER_REFERENCE
+  npm run orders -- recover ORDER_REFERENCE
+  npm run orders -- fulfill ORDER_REFERENCE
+The launcher supplies the helper connection automatically for these commands too.
+
+HOW ELECTRUM PAYMENTS WORK
+Each order gets a receiving request from a dedicated Electrum watch-only wallet.
+The payment address and BTC amount are saved in SQLite before being displayed.
+Refreshing the page or submitting twice uses the same saved order and address.
+Another order gets another address; the database rejects address reuse.
+
+The checkout displays the Bitcoin amount, receiving address and a bitcoin:
+wallet link on your shop. No BTCPay account, redirect or API key is needed.
+The payment page and cart work with JavaScript disabled; cookies are required.
+A wallet link requires a compatible Bitcoin wallet installed on the device;
+otherwise customers can copy the address and amount into their wallet.
+
+Store prices remain in your chosen fiat currency. At checkout the server fetches
+a fresh BTC spot quote from Coinbase's public price API, without an account or
+API key. No order details or customer addresses are sent to that price service.
+It sees the server's request and currency. The rate and rounded-up integer satoshi
+amount are frozen for that order's 60-minute payment window. If the price service
+is unavailable or returns a stale/invalid result, no payment address is shown.
+The configured server needs outbound HTTPS access to api.coinbase.com.
+
+DEFAULT CONFIRMATION POLICY
+The app polls Electrum's wallet-backed get_request method, after checking the
+wallet is synchronized, connected, on the expected network and has the expected
+master public key. It does not use unauthenticated explorer results or an address's
+current unspent balance as proof of payment. Spending received funds later does
+not remove the historical incoming payment from the Electrum request.
+
+Electrum's paid flag can mean just one confirmation. The shop separately requires
+BTC_MIN_CONFIRMATIONS (default 3, minimum 1). Pending, partial, inconsistent and
+late payments never authorize automatic fulfillment. If full payment is first
+observed after checkout expiry, it requires review, even if it may have been sent
+earlier while the shop was offline. Bitcoin payments cannot be prevented after
+expiry; contact the customer and handle refunds/late payments manually.
+
+IMPORTANT ADDRESS RESERVATIONS
+Electrum may reuse an address from an expired/deleted request. The shop therefore
+creates NON-EXPIRING Electrum reservations and enforces its own checkout deadline.
+Never delete shop requests from Electrum, even when a customer abandons an order.
+Keep the dedicated wallet, its request history and shop database together when
+moving servers. Do not use that watch-only wallet for unrelated payment requests.
+The SQLite unique-address index is a second defense against accidental reuse.
+
+MANUAL CONNECTION (OPTIONAL ALTERNATIVE)
+SET UP YOUR WATCH-ONLY WALLET
+1. Install an official Electrum release on your trusted computer and merchant
+   server. This integration was checked against Electrum's current 4.x RPC
+   source (4.8.2 source tree); test your installed version before accepting money.
+   Official downloads: https://electrum.org/
+2. Create a separate standard deterministic wallet for the generic store on your
+   trusted computer. Keep its seed/private keys there, with your normal backup.
+3. In Electrum, Wallet > Information, copy its Master Public Key (for example
+   zpub...). On the server, create a WATCH-ONLY wallet from that public key.
+   You can create this watch-only copy in Electrum's GUI using the import-keys
+   flow with ONLY the master public key, then transfer just that watch-only file
+   to the server. Verify Electrum identifies the copy as watching-only and that
+   its first receiving addresses match the original wallet.
+4. Keep the watch-only wallet outside the web root in a private directory.
+   Example daemon data directory: /var/lib/electrum-shop
+   Example wallet path: /var/lib/electrum-shop/wallets/shop-watch-only
+   Use the Electrum daemon's own service account; restrict directory/file access.
+   The shop speaks to the daemon over RPC and does not read the wallet file.
+5. Configure Electrum's RPC host and port in that daemon's data directory:
+     electrum -D /var/lib/electrum-shop setconfig rpchost 127.0.0.1
+     electrum -D /var/lib/electrum-shop setconfig rpcport 7777
+   Run the Electrum daemon and load the watch-only wallet:
+     electrum -D /var/lib/electrum-shop daemon -d
+     electrum -D /var/lib/electrum-shop -w /var/lib/electrum-shop/wallets/shop-watch-only load_wallet
+   Set these commands up under your server's service manager for restart/reboot.
+   Electrum generates RPC authentication credentials. Read them locally:
+     electrum -D /var/lib/electrum-shop getconfig rpcuser
+     electrum -D /var/lib/electrum-shop getconfig rpcpassword
+   Put those values in your local .env file, not GitHub or chat. Keep RPC bound
+   to loopback; never add it to your Tor service or nginx configuration.
+6. Allow Electrum to fully synchronize. Configure Electrum's network/proxy
+   settings if you want its connections routed through Tor. This app does not
+   configure Electrum's upstream servers or proxy for you.
+
+ACTIVATE MANUAL CHECKOUT
+Copy .env.example to .env and fill in:
+  PAYMENT_MODE=electrum
+  SHOP_ORIGIN=http://YOUR-56-CHARACTER-ADDRESS.onion
+  ELECTRUM_RPC_URL=http://127.0.0.1:7777
+  ELECTRUM_RPC_USER=your-local-rpc-user
+  ELECTRUM_RPC_PASSWORD=your-local-rpc-password
+  ELECTRUM_WALLET=/var/lib/electrum-shop/wallets/shop-watch-only
+  ELECTRUM_MASTER_PUBLIC_KEY=your-master-PUBLIC-key
+  ELECTRUM_WATCH_ONLY=true
+  ELECTRUM_NETWORK=mainnet
+  BTC_MIN_CONFIRMATIONS=3
+  BTC_CHECKOUT_MINUTES=60
+
+ELECTRUM_WATCH_ONLY is your confirmation that you installed a watch-only wallet;
+it is not an RPC inspection of whether the daemon holds private keys. The app
+checks the public key and never calls private-key, seed, signing or spending APIs.
+Never put your seed or a master private key in .env. Keep the master public key
+private too: it exposes the wallet's derived addresses, although it cannot spend.
+
+For local testing, leave SHOP_ORIGIN=http://127.0.0.1:8080. For test coins, use a
+separate Electrum testnet/testnet4/signet/regtest daemon and wallet, set the matching
+ELECTRUM_NETWORK, and configure its wallet/key/RPC values. Non-mainnet payment
+pages are clearly labeled. Always test a complete test-network checkout first.
+
+Edit config/shop.json to confirm the real products, integer-cent prices, currency
+(USD/EUR/GBP/CAD/AUD), shipping fee, two-letter shipping country codes and support
+email. The app does not calculate taxes. Update public/index.html with matching real product
+names, descriptions and photographs, keeping product IDs, buy markers and
+price attributes. Restart the app after changing configuration.
+
+GAP LIMITS & BACKUPS
+Abandoned requests can create a long sequence of unused receiving addresses.
+The adapter enables Electrum's force option to reserve beyond the current gap.
+Your spending wallet and any seed-based restore must scan far enough to discover
+those addresses. Adjust the gap limit in your original Electrum wallet when
+needed; keep an up-to-date wallet backup and the saved address history. Follow
+Electrum's current gap-limit guidance rather than assuming its default is enough.
+
+ORDER MANAGEMENT (SERVER TERMINAL ONLY)
+Run from the project directory using the same DATA_DIR and .env as the service:
+  node --env-file-if-exists=.env orders.mjs list
+  node --env-file-if-exists=.env orders.mjs show ORDER_REFERENCE
+  node --env-file-if-exists=.env orders.mjs sync ORDER_REFERENCE
+  node --env-file-if-exists=.env orders.mjs fulfill ORDER_REFERENCE
+
+list shows the latest 100 orders; total is fiat cents and amount_sats is satoshis.
+show includes private shipping details; keep its output private. fulfill always
+performs a fresh Electrum check and refuses demo, legacy, partial, late or
+insufficiently confirmed payments. There is no public merchant dashboard or
+email sender. Customers can view their order from their browser session for
+7 days and use the support contact plus saved reference if they lose that session.
+
+TIMEOUT RECOVERY
+If a request was created but its response was lost, do not issue another request.
+Inspect Electrum for the memo generic-store-page:ORDER_REFERENCE, then run:
+  node --env-file-if-exists=.env orders.mjs recover ORDER_REFERENCE
+Recovery finds exactly one matching saved request, verifies its amount and address,
+and attaches it to the order. It never creates another request. If the quote failed
+before request creation, or Electrum has no matching request, the command refuses;
+resolve that failed checkout with the customer rather than guessing it was paid.
+
+UPGRADING FROM THE PREVIOUS BTCPAY VERSION
+Existing SQLite records are preserved; new payment columns are added automatically.
+The BTCPay integration and configuration are removed. Configure Electrum before accepting payments. Old BTCPay orders remain available for records but are not
+verified or fulfilled by Electrum. Resolve outstanding BTCPay invoices in your
+old system before switching. Do not change a live order's provider or address.
+
+TOR HOSTING
+Node.js, nginx and Tor are still used. Install source under /opt/generic-store-page and
+run it as the dedicated generic-store-page system user. The supplied systemd service
+uses /etc/generic-store-page.env (owner generic-store-page, mode 600) instead of .env.
+Use these additional production settings:
+  PORT=8081
+  DATA_DIR=/var/lib/generic-store-page
+  SHOP_ORIGIN=http://YOUR-56-CHARACTER-ADDRESS.onion
+Install hosting/generic-store-page.service into /etc/systemd/system; check its Node path.
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now generic-store-page
+The automatic launcher runs under the generic-store-page service account. Make Electrum
+accessible to that account and provide electrum.local.json in /opt/generic-store-page.
+For manual RPC mode, run the Electrum daemon separately with its wallet loaded.
+
+Install hosting/nginx.conf into nginx's sites-available directory and enable it
+via sites-enabled. It listens on 127.0.0.1:8080 and proxies to Node on port 8081.
+Run sudo nginx -t before reloading nginx. Review existing default sites if this
+server should be onion-only. Add hosting/torrc-snippet.conf to /etc/tor/torrc only
+once, validate with sudo tor --verify-config -f /etc/tor/torrc, then restart Tor.
+Read the public onion address from /var/lib/tor/generic-store-page/hostname and ensure
+it matches SHOP_ORIGIN. Keep Tor's service keys private. Visit using Tor Browser.
+
+STORAGE & VERIFICATION
+Back up SQLite consistently and keep backups private. data/, .env and database
+files are ignored by Git. Keep the Electrum wallet data out of the project too.
+Automatic deletion/retention, refunds, tax calculation, inventory management,
+carrier quotes and email receipts are not implemented. Run one shop process.
+  npm test
+Tests use simulated RPC/payment responses. No installed desktop Electrum application or real Bitcoin
+payment has been exercised here; test your wallet/network and browser before launch.
+
+REFERENCES
+https://electrum.readthedocs.io/en/latest/jsonrpc.html
+https://electrum.readthedocs.io/en/latest/merchant.html
+https://github.com/spesmilo/electrum/blob/master/electrum/commands.py
+https://github.com/spesmilo/electrum/blob/master/electrum/wallet.py
+https://docs.cdp.coinbase.com/coinbase-app/track-apis/prices

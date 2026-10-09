@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Browse our product catalog, explore categories and view product details."><meta name="referrer" content="no-referrer"><title>{{appearance:brand}} — Product catalog</title><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/theme.css"><script src="/cart.js" defer></script></head>
+<body>
+<a class="skip" href="#main">Skip to catalog</a>
+<div class="preview">{{appearance:announcement}} <span>Sample brand &amp; products · Ordering is not open</span></div>
+<header class="shell"><a class="brand" href="./" aria-label="{{appearance:brand}} home">{{appearance:brand}}<span>{{appearance:tagline}}</span></a><nav aria-label="Main navigation"><a href="#collection" aria-current="page">Catalog</a><a href="#about">About</a><a href="#information">Information</a><a href="/cart">Cart (<span data-cart-count><!-- cart-count --></span>)</a><!-- account-link --></nav></header>
+<main id="main" class="shell">
+<section class="catalog-intro" id="collection" aria-labelledby="catalog-title"><div><p class="eyebrow">THE PRODUCT COLLECTION</p><h1 id="catalog-title">{{appearance:headline}}</h1><p>{{appearance:intro}}</p></div><div class="edition"><span>COLLECTION NO.</span><strong>01</strong><span>3 SAMPLE PRODUCTS</span></div></section>
+<div class="catalog-layout"><aside class="catalog-note"><p class="eyebrow">{{appearance:sidebarTitle}}</p><p>{{appearance:sidebarText}}</p><div class="note-rule"></div><h2>{{appearance:noteTitle}}</h2><p>{{appearance:noteText}}</p><a href="#about">About the store ↗</a></aside>
+<fieldset class="catalog"><legend>Browse by category</legend>
+<input class="filter-input" type="radio" name="category" id="all" checked><label class="filter-label" for="all">All products <span>03</span></label>
+<input class="filter-input" type="radio" name="category" id="category-one"><label class="filter-label" for="category-one">Category 1</label>
+<input class="filter-input" type="radio" name="category" id="category-two"><label class="filter-label" for="category-two">Category 2</label>
+<input class="filter-input" type="radio" name="category" id="category-three"><label class="filter-label" for="category-three">Category 3</label>
+<div class="products"><article class="product category-one" aria-labelledby="product-title-01" id="product-01">
+  <div class="product-art placeholder-one" role="img" aria-label="Image placeholder for Sample Product 01">
+    <span class="sample">SAMPLE</span><div class="image-placeholder" aria-hidden="true"><strong>01</strong><span>PRODUCT IMAGE</span></div><span class="product-category">CATEGORY 1</span>
+  </div>
+  <div class="product-copy"><p class="product-code">PRODUCT / 01</p><h2 id="product-title-01">Sample Product 01</h2><p class="notes">Feature one · Feature two · Feature three</p><p class="description">Add a short product description here. Highlight the main features and what makes this item useful.</p>
+  <dl class="specs"><div><dt>Category</dt><dd>Category 1</dd></div><div><dt>Options</dt><dd>To be confirmed</dd></div><div><dt>Price</dt><dd data-price="01">Coming soon</dd></div></dl>
+  <details><summary>Product details <span aria-hidden="true">+</span></summary><p>Replace this text with product specifications, available options and any other information customers need before ordering.</p></details><!-- buy-01 --></div>
+</article><article class="product category-two" aria-labelledby="product-title-02" id="product-02">
+  <div class="product-art placeholder-two" role="img" aria-label="Image placeholder for Sample Product 02">
+    <span class="sample">SAMPLE</span><div class="image-placeholder" aria-hidden="true"><strong>02</strong><span>PRODUCT IMAGE</span></div><span class="product-category">CATEGORY 2</span>
+  </div>
+  <div class="product-copy"><p class="product-code">PRODUCT / 02</p><h2 id="product-title-02">Sample Product 02</h2><p class="notes">Feature one · Feature two · Feature three</p><p class="description">Add a short product description here. Highlight the main features and what makes this item useful.</p>
+  <dl class="specs"><div><dt>Category</dt><dd>Category 2</dd></div><div><dt>Options</dt><dd>To be confirmed</dd></div><div><dt>Price</dt><dd data-price="02">Coming soon</dd></div></dl>
+  <details><summary>Product details <span aria-hidden="true">+</span></summary><p>Replace this text with product specifications, available options and any other information customers need before ordering.</p></details><!-- buy-02 --></div>
+</article><article class="product category-three" aria-labelledby="product-title-03" id="product-03">
+  <div class="product-art placeholder-three" role="img" aria-label="Image placeholder for Sample Product 03">
+    <span class="sample">SAMPLE</span><div class="image-placeholder" aria-hidden="true"><strong>03</strong><span>PRODUCT IMAGE</span></div><span class="product-category">CATEGORY 3</span>
+  </div>
+  <div class="product-copy"><p class="product-code">PRODUCT / 03</p><h2 id="product-title-03">Sample Product 03</h2><p class="notes">Feature one · Feature two · Feature three</p><p class="description">Add a short product description here. Highlight the main features and what makes this item useful.</p>
+  <dl class="specs"><div><dt>Category</dt><dd>Category 3</dd></div><div><dt>Options</dt><dd>To be confirmed</dd></div><div><dt>Price</dt><dd data-price="03">Coming soon</dd></div></dl>
+  <details><summary>Product details <span aria-hidden="true">+</span></summary><p>Replace this text with product specifications, available options and any other information customers need before ordering.</p></details><!-- buy-03 --></div>
+</article></div>
+<p class="catalog-footnote">Sample products and image placeholders. Replace with your own product information.</p></fieldset></div>
+<section class="info-row"><div id="about"><p class="eyebrow">ABOUT THE STORE</p><h2>{{appearance:aboutTitle}}</h2><p>{{appearance:aboutText}}</p></div><div id="information"><p class="eyebrow">INFORMATION</p><h2>{{appearance:careTitle}}</h2><p>{{appearance:careText}}</p></div></section>
+</main><footer class="shell"><a class="brand" href="./">{{appearance:brand}}</a><p>Catalog preview · No orders or payments yet</p><a href="#main">Back to top ↑</a></footer>
+</body></html>
